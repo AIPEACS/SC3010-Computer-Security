@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - "attack-recreate/backend/**"
+      - ".github/workflows/build-backend.yml"
   pull_request:
     paths:
       - "attack-recreate/backend/**"
+  workflow_dispatch:
 
 jobs:
   build:
