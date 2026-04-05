@@ -1,0 +1,28 @@
+# VULNERABLE CODE
+# File: data/users.yaml
+# Purpose: Flat-file "database" storing user credentials for the demo application.
+#          Represents Equifax-style PII storage — user IDs, usernames, and plaintext
+#          passwords that become exfiltration targets once RCE is achieved.
+# Time in attack timeline: Pre-attack — data was at rest on server before May 2017.
+#                           Becomes accessible to attacker after RCE via CVE-2017-5638.
+
+users:
+  - id: "a3f1c2d4-58e7-4b91-9c02-1e3f5a7b8d90"
+    username: "alice"
+    password: "Kx7mP2qR"
+
+  - id: "b7e9d1f3-21a4-4c85-8f10-2d4e6c8a0b12"
+    username: "bob"
+    password: "Tz3nW8vS"
+
+  - id: "c4b2e8a6-97d3-4f72-b541-3a5c7d9e1f02"
+    username: "charlie"
+    password: "Lp9hJ4uY"
+
+  - id: "d1f7a3c9-64b8-4e63-a280-4f6d8e0c2b34"
+    username: "diana"
+    password: "Mn5sQ1tX"
+
+  - id: "e8c5f0b2-39a7-4d54-9e17-5a7e9f1d3c56"
+    username: "evan"
+    password: "Rv2wG6kZ"

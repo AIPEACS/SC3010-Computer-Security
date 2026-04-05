@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  VULNERABLE CODE
+  File: pom.xml
+  Purpose: Maven build descriptor for the Struts2 demo web application.
+           Pins Struts2 to version 2.3.28 — a version within the CVE-2017-5638
+           vulnerable range (2.3.5 – 2.3.31). DO NOT upgrade Struts2.
+  Time in attack timeline: Pre-attack — server was running this version from before
+                            March 2017 through the patch window (March–May 2017) and
+                            beyond, enabling the May 13, 2017 initial exploitation.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.demo</groupId>
+  <artifactId>struts2-vulnerable-demo</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>CVE-2017-5638 Vulnerable Struts2 Demo</name>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- VULNERABLE: Do NOT change this version -->
+    <struts2.version>2.3.28</struts2.version>
+  </properties>
+
+  <dependencies>
+    <!-- VULNERABLE Struts2 core — CVE-2017-5638 affects 2.3.5 through 2.3.31 -->
+    <dependency>
+      <groupId>org.apache.struts</groupId>
+      <artifactId>struts2-core</artifactId>
+      <version>${struts2.version}</version>
+    </dependency>
+
+    <!-- Struts2 convention plugin (annotation-based action mapping) -->
+    <dependency>
+      <groupId>org.apache.struts</groupId>
+      <artifactId>struts2-convention-plugin</artifactId>
+      <version>${struts2.version}</version>
+    </dependency>
+
+    <!-- SnakeYAML for reading users.yaml -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.33</version>
+    </dependency>
+
+    <!-- Servlet API (provided by Tomcat at runtime) -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>struts2-demo</finalName>
+    <plugins>
+      <!-- Embedded Tomcat 7 — run with: mvn tomcat7:run -->
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>8080</port>
+          <path>/</path>
+          <uriEncoding>UTF-8</uriEncoding>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.3.2</version>
+        <configuration>
+          <failOnMissingWebXml>true</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

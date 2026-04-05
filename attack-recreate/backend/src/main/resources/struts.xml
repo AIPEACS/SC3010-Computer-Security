@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  VULNERABLE CODE
+  File: src/main/resources/struts.xml
+  Purpose: Struts2 framework configuration. Registers UploadAction at /upload.action
+           with multipart/form-data support. The multipart interceptor in Struts2 2.3.28
+           is the component that contains CVE-2017-5638 — it evaluates OGNL from the
+           Content-Type header when it encounters a multipart parsing error.
+  Time in attack timeline: Active from server deployment. The configuration enabling
+                            multipart parsing is what makes /upload.action exploitable.
+-->
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+    "http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+  <constant name="struts.devMode" value="false" />
+  <!-- VULNERABLE: multipart parser processes Content-Type before action dispatch -->
+  <constant name="struts.multipart.parser" value="jakarta" />
+  <!-- Limit upload size to 2 MB -->
+  <constant name="struts.multipart.maxSize" value="2097152" />
+
+  <package name="default" namespace="/" extends="struts-default">
+    <action name="upload" class="com.demo.UploadAction">
+      <interceptor-ref name="fileUpload">
+        <param name="maximumSize">2097152</param>
+        <param name="allowedTypes">text/plain,image/jpeg,image/png,application/pdf</param>
+      </interceptor-ref>
+      <interceptor-ref name="defaultStack" />
+      <result name="success">/success.jsp</result>
+      <result name="input">/upload.jsp</result>
+    </action>
+  </package>
+</struts>
