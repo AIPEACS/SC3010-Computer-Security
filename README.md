@@ -4,7 +4,7 @@
 
 ---
 ## Pre-knowledge
-- [How does OGNL injection work?](/_notes/OGNL-injection.md)
+- [How does OGNL injection work?](_note/OGNL-injection-introduction.md)
   - Summary of my 3-hour inquiry with **Gemini** on OGNL injection.
 ---
 ## Structure
@@ -18,7 +18,7 @@ SC3010-Computer-Security/
 └── _notes/               # Background reading
 ```
 
-See [simulation/attack-script/README.md](simulation/attack-script/README.md) for full setup and usage instructions.
+See [simulation/README.md](simulation/README.md) for full setup and usage instructions.
 
 ---
 
