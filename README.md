@@ -7,7 +7,7 @@
 - [How does OGNL injection work?](/_Notes/OGNL-injection.md)
   - Summary of my 3-hour inquiry with **Gemini** on OGNL injection.
 ---
-### Structure
+## Structure
 ---
 
 ## References
