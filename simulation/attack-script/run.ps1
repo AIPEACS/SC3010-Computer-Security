@@ -1,4 +1,5 @@
 While ($true) {
+    $Host.UI.RawUI.FlushInputBuffer()
     $s = Read-Host "Enter 0 to run the exploit in safe demo mode, or 1 for full RCE, enter e to exit"
     switch ($s.Trim()) {
         '0' {
