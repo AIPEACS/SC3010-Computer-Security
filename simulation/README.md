@@ -32,6 +32,7 @@ CVSS v3 Score: **10.0 (Critical)**
 simulation/
 ├── backend/                          # Vulnerable Struts2 server (Java/Maven)
 │   ├── pom.xml                       # Struts2 2.3.28 (VULNERABLE — do not upgrade)
+│   ├── .mvn/jvm.config               # --add-opens flags for Java 21+ compatibility
 │   ├── data/
 │   │   └── users.yaml                # Fake user "database" (exfiltration target)
 │   └── src/main/
@@ -45,6 +46,7 @@ simulation/
 │           ├── upload.jsp            # Normal upload form UI
 │           └── success.jsp           # Post-upload confirmation page
 └── attack-script/
+    ├── run.ps1                       # simple entry point
     ├── exploit_cve_2017_5638.ps1     # PowerShell exploit (cross-platform)
     └── README.md
 ```
@@ -55,9 +57,11 @@ simulation/
 
 | Requirement | Version | Verify |
 |---|---|---|
-| Java JDK | 8 or 11 | `java -version` |
+| Java JDK | 8, 11, or 21+ | `java -version` |
 | Apache Maven | 3.6+ | `mvn -version` |
 | PowerShell | Core 7+ | `$PSVersionTable` |
+
+> **Note (Java 21+):** The `.mvn/jvm.config` file in `backend/` adds the required `--add-opens` flags automatically. No manual configuration is needed.
 
 ---
 
@@ -85,6 +89,22 @@ Open a **second** terminal (keep the server running in the first).
 ```powershell
 cd SC3010-Computer-Security/simulation/attack-script
 
+# Interactive menu (recommended):
+.\run.ps1
+```
+
+Menu options:
+| Key | Action |
+|-----|--------|
+| `0` | Demo mode — proves OGNL evaluation without running OS commands |
+| `1` | Full exploit — `whoami` (shows the server process owner) |
+| `a` | Credential exfiltration — reads `data/users.yaml` over RCE |
+| `d` | Diagnostics — runs 9 incremental payloads to debug OGNL step failures |
+| `e` | Exit |
+
+Or invoke the exploit script directly:
+
+```powershell
 # Demo mode (safe — proves OGNL evaluation, no OS commands):
 .\exploit_cve_2017_5638.ps1 -DemoMode
 
@@ -92,7 +112,7 @@ cd SC3010-Computer-Security/simulation/attack-script
 .\exploit_cve_2017_5638.ps1
 
 # Custom command:
-.\exploit_cve_2017_5638.ps1 -Command "id"
+.\exploit_cve_2017_5638.ps1 -Command "dir"
 
 # Custom target + command:
 .\exploit_cve_2017_5638.ps1 -Target "http://localhost:8080/upload.action" -Command "whoami"
@@ -104,7 +124,8 @@ cd SC3010-Computer-Security/simulation/attack-script
 |-----------|------|---------|-------------|
 | `-Target` | string | `http://localhost:8080/upload.action` | Target endpoint URL |
 | `-Command` | string | `whoami` | OS command to execute (full exploit only) |
-| `-DemoMode` | switch | off | Safe arithmetic-only OGNL proof |
+| `-DemoMode` | switch | off | Safe proof-of-evaluation OGNL payload |
+| `-DiagLevel` | int | `0` | Run diagnostic payload 1-9 (0 = off) |
 
 ---
 
