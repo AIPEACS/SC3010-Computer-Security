@@ -11,8 +11,82 @@ This repo contains:
 - Annotated **reference source files** from Apache Struts 2.3.28 mapping each step of the call chain.
 
 ---
-## Background Knowledge
+
+## Attack State Machine
+
+The diagram below shows each decision branch in the Struts2 request pipeline. The red path is the one the attacker forces; grey `→ ...` branches are safe paths that don't apply during the exploit.
+
+```mermaid
+flowchart TD
+    Start([Attacker sends HTTP POST /upload.action<br/>Content-Type: &#37;&#123;OGNL_PAYLOAD&#125;.multipart/form-data])
+    Start --> F1
+
+    F1[/"<b>STEP 1</b><br/>StrutsPrepareAndExecuteFilter.doFilter()"/]
+    F1 --> D1{URL in excludedPatterns?}
+    D1 -- "Yes → chain.doFilter() ..." --> OUT1([normal servlet chain ...])
+    D1 -- No --> F2
+
+    F2[/"<b>STEP 2</b><br/>PrepareOperations.wrapRequest()"/]
+    F2 --> F3
+
+    F3[/"<b>STEP 3</b><br/>Dispatcher.wrapRequest()<br/>reads request.getContentType()"/]
+    F3 --> D2{"Content-Type contains<br/>&quot;multipart/form-data&quot;?"}
+    D2 -- "No → StrutsRequestWrapper ..." --> OUT2([normal non-upload request ...])
+    D2 -- "Yes (attacker's payload still<br/>contains the keyword)" --> F4
+
+    F4[/"<b>STEP 4</b><br/>new MultiPartRequestWrapper(mpr, request, saveDir, ...)<br/>constructor calls multi.parse()"/]
+    F4 --> F5
+
+    F5[/"<b>STEP 5</b><br/>JakartaMultiPartRequest.parse()<br/>→ Commons FileUpload.parseRequest()"/]
+    F5 --> D3{"FileUpload can parse<br/>Content-Type?"}
+    D3 -- "Yes → normal file upload ..." --> OUT3([files extracted, action executes ...])
+    D3 -- "No — Content-Type is malformed<br/>throws InvalidContentTypeException<br/>(message = raw Content-Type string)" --> CATCH
+
+    CATCH["parse() catch block<br/>calls buildErrorMessage(e, &#123;&#125;)"]
+    CATCH --> F6
+
+    F6[/"<b>STEP 6</b><br/>JakartaMultiPartRequest.buildErrorMessage()<br/>→ LocalizedTextUtil.findText(class, errorKey, locale, e.getMessage(), args)"/]
+    F6 --> D4{"Resource bundle has key<br/>struts.messages.upload.error.*?"}
+    D4 -- "Yes → safe localised message ..." --> OUT4([error displayed safely ...])
+    D4 -- "No — falls back to<br/>e.getMessage() as the default<br/>(attacker's raw Content-Type)" --> TRANSLATE
+
+    TRANSLATE["TextParseUtil.translateVariables()<br/>scans string for &#37;&#123;...&#125; expressions"]
+    TRANSLATE --> D5{"String contains<br/>&#37;&#123;...&#125; OGNL expression?"}
+    D5 -- "No → plain error string ..." --> OUT5([safe error message ...])
+    D5 -- "Yes — evaluates OGNL<br/>inside attacker content" --> OGNL
+
+    OGNL[/"<b>STEP 7a — OGNL sandbox bypass</b><br/>#ognlUtil.getExcludedClasses().clear()<br/>#ognlUtil.getExcludedPackageNames().clear()<br/><i>OgnlUtil.java</i>"/]
+    OGNL --> ACCESS
+
+    ACCESS[/"<b>STEP 7b — Unrestricted reflection</b><br/>#context.setMemberAccess(DEFAULT_MEMBER_ACCESS)<br/><i>OgnlContext.java</i>"/]
+    ACCESS --> RCE
+
+    RCE[/"<b>STEP 8 — RCE</b><br/>Runtime.getRuntime().exec(cmd)"/]
+    RCE --> Done([Command executed as Tomcat process user])
+
+    style Start fill:#d32f2f,color:#fff
+    style Done fill:#d32f2f,color:#fff
+    style OUT1 fill:#9e9e9e,color:#fff
+    style OUT2 fill:#9e9e9e,color:#fff
+    style OUT3 fill:#9e9e9e,color:#fff
+    style OUT4 fill:#9e9e9e,color:#fff
+    style OUT5 fill:#9e9e9e,color:#fff
+    style OGNL fill:#b71c1c,color:#fff
+    style ACCESS fill:#b71c1c,color:#fff
+    style RCE fill:#b71c1c,color:#fff
+    style CATCH fill:#e65100,color:#fff
+    style TRANSLATE fill:#e65100,color:#fff
+```
+
+For the full state-machine with branch explanations, see [diagrams/cve-2017-5638-state-machine.md](diagrams/cve-2017-5638-state-machine.md).  
+For a sequence diagram view and annotated OGNL payload breakdown, see [diagrams/cve-2017-5638-attack-chain.md](diagrams/cve-2017-5638-attack-chain.md).
+
+---
+
+## Pre-knowledge
 - [How does OGNL injection work?](_note/OGNL-injection-introduction.md)
+  - Summary of my 3-hour inquiry with **Gemini** on OGNL injection.
+
 ---
 
 ## Repository Structure
@@ -29,74 +103,18 @@ SC3010-Computer-Security/
 │       ├── struts2-core/     # Request pipeline classes + vulnerable JakartaMultiPartRequest
 │       ├── xwork2/           # ActionContext.java, OgnlUtil.java
 │       └── ognl/             # OgnlContext.java
-├── state-machine-diagram/    # Mermaid attack sequence diagram + annotated OGNL payload
+├── diagrams/                 # State-machine + sequence diagrams, annotated OGNL payload
 └── _notes/                   # Background reading
 ```
 
----
-## Attack Simulation
-* See [attack-recreate/attack-script/README.md](attack-recreate/attack-script/README.md) for setup and usage instructions.
+See [attack-recreate/attack-script/README.md](attack-recreate/attack-script/README.md) for setup and usage instructions.
 
 ---
-## Attack Call Chain Diagram
 
-The diagram below traces a single malicious HTTP POST from the attacker to arbitrary OS command execution on the server.  
-For the full payload breakdown and source-file table, see [state-machine-diagram/cve-2017-5638-attack-chain.md](state-machine-diagram/cve-2017-5638-attack-chain.md).
+## References
+- Gemini: https://gemini.com/
+- Struts2 repo on GitHub, branch 2.3.28: https://github.com/apache/struts/tree/STRUTS_2_3_28
 
-```mermaid
-sequenceDiagram
-    actor Attacker
-    participant Tomcat     as Tomcat<br/>Servlet Container
-    participant Filter     as StrutsPrepareAndExecuteFilter<br/>doFilter()
-    participant Prepare    as PrepareOperations<br/>wrapRequest()
-    participant Dispatcher as Dispatcher<br/>wrapRequest()
-    participant Wrapper    as MultiPartRequestWrapper<br/>constructor
-    participant Jakarta    as JakartaMultiPartRequest<br/>parse() / buildErrorMessage()
-    participant FileUpload as Commons FileUpload<br/>parseRequest()
-    participant OGNL       as OGNL Engine<br/>LocalizedTextUtil.findText()
-    participant OgnlUtil   as OgnlUtil<br/>clear sandboxes
-    participant OgnlCtx    as OgnlContext<br/>setMemberAccess()
-    participant Runtime    as java.lang.Runtime<br/>exec(cmd)
-
-    Note over Attacker: OGNL payload embedded in Content-Type header:<br/>%{...#ognlUtil.getExcludedClasses().clear()...}.multipart/form-data
-
-    Attacker     ->> Tomcat:      HTTP POST /upload.action<br/>Content-Type: %{OGNL_PAYLOAD}.multipart/form-data
-    Tomcat       ->> Filter:      doFilter(request, response, chain)
-    Note over Filter:             STEP 1 — servlet filter entry point<br/>StrutsPrepareAndExecuteFilter.java
-
-    Filter       ->> Prepare:     prepare.wrapRequest(request)
-    Note over Prepare:            STEP 2 — bridge from filter to Dispatcher<br/>PrepareOperations.java
-
-    Prepare      ->> Dispatcher:  dispatcher.wrapRequest(request)
-    Note over Dispatcher:         STEP 3a — reads Content-Type header<br/>"multipart/form-data" keyword detected<br/>Dispatcher.java
-
-    Dispatcher   ->> Wrapper:     new MultiPartRequestWrapper(mpr, request, saveDir, ...)
-    Note over Wrapper:            STEP 4 — constructor immediately invokes parse()<br/>MultiPartRequestWrapper.java
-
-    Wrapper      ->> Jakarta:     multi.parse(request, saveDir)
-    Note over Jakarta:            STEP 5 — tells Commons FileUpload to parse request<br/>JakartaMultiPartRequest.java
-
-    Jakarta      ->> FileUpload:  upload.parseRequest(createRequestContext(request))
-    Note over FileUpload:         reads Content-Type via getContentType()<br/>(returns attacker's poisoned value)
-
-    FileUpload  -->> Jakarta:     throws InvalidContentTypeException<br/>(message contains raw Content-Type string)
-
-    Note over Jakarta:            STEP 5 catch — exception caught in parse()<br/>calls buildErrorMessage(e, {})
-
-    Jakarta      ->> OGNL:        LocalizedTextUtil.findText(..., e.getMessage(), args)
-    Note over OGNL:               STEP 6 — TextParseUtil.translateVariables() fires<br/>%{...} expressions in Content-Type are evaluated as OGNL
-
-    OGNL         ->> OgnlUtil:    getExcludedClasses().clear()<br/>getExcludedPackageNames().clear()
-    Note over OgnlUtil:           STEP 7a — OGNL security sandbox destroyed<br/>OgnlUtil.java
-
-    OGNL         ->> OgnlCtx:     context.setMemberAccess(DEFAULT_MEMBER_ACCESS)
-    Note over OgnlCtx:            STEP 7b — SecurityMemberAccess replaced with<br/>DefaultMemberAccess (unrestricted reflection)<br/>OgnlContext.java
-
-    OGNL         ->> Runtime:     Runtime.getRuntime().exec(cmd)
-    Note over Runtime:            STEP 8 — arbitrary OS command execution<br/>RCE achieved as the Tomcat process user
-
-    Runtime     -->> Attacker:    command output (OOB channel / HTTP response body)
-```
 ---
 
 ## Third-Party Software Notices
@@ -116,10 +134,6 @@ Apache Struts 2 bundles additional third-party components, each governed by thei
 | XWork | [`struts-src-code/licenses/XWORK-LICENSE.txt`](struts-src-code/licenses/XWORK-LICENSE.txt) |
 | FreeMarker | [`struts-src-code/licenses/FREEMARKER-LICENSE.txt`](struts-src-code/licenses/FREEMARKER-LICENSE.txt) |
 
----
-
-Source and repository references:
+Source references:
 - [apache/struts @ STRUTS\_2\_3\_28](https://github.com/apache/struts/tree/STRUTS_2_3_28) — Struts2 core and XWork
 - [jkuhnert/ognl](https://github.com/jkuhnert/ognl) — OGNL 3.0.x
-- [Gemini](https://gemini.com/) — Consultation on general OGNL injection.
----
