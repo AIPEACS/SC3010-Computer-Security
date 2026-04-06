@@ -11,6 +11,9 @@ This repo contains:
 - Annotated **reference source files** from Apache Struts 2.3.28 mapping each step of the call chain.
 
 ---
+## Pre-knowledge
+- [How does OGNL injection work?](_note/OGNL-injection-introduction.md)
+---
 
 ## Attack Call Chain Diagram
 
@@ -72,11 +75,6 @@ sequenceDiagram
     Runtime     -->> Attacker:    command output (OOB channel / HTTP response body)
 ```
 
----
-
-## Pre-knowledge
-- [How does OGNL injection work?](_note/OGNL-injection-introduction.md)
-  - Summary of my 3-hour inquiry with **Gemini** on OGNL injection.
 
 ---
 
@@ -124,5 +122,5 @@ Apache Struts 2 bundles additional third-party components, each governed by thei
 Source and repository references:
 - [apache/struts @ STRUTS\_2\_3\_28](https://github.com/apache/struts/tree/STRUTS_2_3_28) — Struts2 core and XWork
 - [jkuhnert/ognl](https://github.com/jkuhnert/ognl) — OGNL 3.0.x
-- [Gemini](https://gemini.com/) — For knowledge consultation.
+- [Gemini](https://gemini.com/) — Consultation on general OGNL injection.
 ---
