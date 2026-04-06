@@ -21,7 +21,7 @@ This repo contains:
 
 ```
 SC3010-Computer-Security/
-├── attack-recreate/
+├── simulation/
 │   ├── backend/          # Vulnerable Apache Struts2 2.3.28 server (Java/Maven)
 │   └── attack-script/    # Exploit script for CVE-2017-5638
 │       └── exploit_cve_2017_5638.ps1   # PowerShell (cross-platform)
@@ -37,7 +37,7 @@ SC3010-Computer-Security/
 
 ---
 ## Exploit Simulation
-- See [attack-recreate/attack-script/README.md](attack-recreate/attack-script/README.md) for setup and usage instructions.
+- See [simulation/attack-script/README.md](attack-recreate/attack-script/README.md) for setup and usage instructions.
 
 ---
 
