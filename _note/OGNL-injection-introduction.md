@@ -1,6 +1,5 @@
 # OGNL Injection: The Danger of Server-Side Script Injection
 
-> Source: https://gemini.google.com/share/2d08b7d55e52  
 > Created: April 5, 2026
 
 ---
