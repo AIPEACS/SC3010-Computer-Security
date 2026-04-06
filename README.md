@@ -16,6 +16,26 @@ This repo contains:
 - [How does OGNL injection work?](_note/OGNL-injection-introduction.md)
 
 ---
+
+## Repository Structure
+
+```
+SC3010-Computer-Security/
+├── attack-recreate/
+│   ├── backend/          # Vulnerable Apache Struts2 2.3.28 server (Java/Maven)
+│   └── attack-script/    # Exploit script for CVE-2017-5638
+│       └── exploit_cve_2017_5638.ps1   # PowerShell (cross-platform)
+├── struts-src-code/          # Apache Struts2 reference source + legal notices
+│   ├── licenses/             # LICENSE, NOTICE, and component licenses
+│   └── src/
+│       ├── struts2-core/     # Request pipeline classes + vulnerable JakartaMultiPartRequest
+│       ├── xwork2/           # ActionContext.java, OgnlUtil.java
+│       └── ognl/             # OgnlContext.java
+├── diagrams/                 # State-machine + sequence diagrams, annotated OGNL payload
+└── _notes/                   # Background reading
+```
+
+---
 ## Exploit Simulation
 - See [attack-recreate/attack-script/README.md](attack-recreate/attack-script/README.md) for setup and usage instructions.
 
@@ -80,25 +100,6 @@ For a sequence diagram view and annotated OGNL payload breakdown, see [diagrams/
 
 ---
 
-## Repository Structure
-
-```
-SC3010-Computer-Security/
-├── attack-recreate/
-│   ├── backend/          # Vulnerable Apache Struts2 2.3.28 server (Java/Maven)
-│   └── attack-script/    # Exploit script for CVE-2017-5638
-│       └── exploit_cve_2017_5638.ps1   # PowerShell (cross-platform)
-├── struts-src-code/          # Apache Struts2 reference source + legal notices
-│   ├── licenses/             # LICENSE, NOTICE, and component licenses
-│   └── src/
-│       ├── struts2-core/     # Request pipeline classes + vulnerable JakartaMultiPartRequest
-│       ├── xwork2/           # ActionContext.java, OgnlUtil.java
-│       └── ognl/             # OgnlContext.java
-├── diagrams/                 # State-machine + sequence diagrams, annotated OGNL payload
-└── _notes/                   # Background reading
-```
-
----
 
 ## Third-Party Software Notices
 
