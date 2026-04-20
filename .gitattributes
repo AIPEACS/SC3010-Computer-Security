@@ -27,3 +27,5 @@
 *.zip binary
 *.tar binary
 *.gz binary
+
+struts-src-code/ linguist-vendored
