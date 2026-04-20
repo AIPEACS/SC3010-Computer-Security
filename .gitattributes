@@ -28,4 +28,4 @@
 *.tar binary
 *.gz binary
 
-struts-src-code/ linguist-vendored
+struts-src-code/* linguist-vendored
