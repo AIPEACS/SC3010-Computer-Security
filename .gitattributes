@@ -29,3 +29,4 @@
 *.gz binary
 
 /struts-src-code/* linguist-vendored
+*.java linguist-vendored
