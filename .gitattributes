@@ -28,6 +28,5 @@
 *.tar binary
 *.gz binary
 
-struts-src-code/* linguist-vendored
+struts-src-code/** linguist-detectable=false
 *.jsp linguist-vendored
-*/UserService.java linguist-vendored
