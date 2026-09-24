@@ -47,11 +47,11 @@ The diagram below shows each decision branch in the Struts2 request pipeline. Th
 
 ```mermaid
 flowchart TD
-    Start([Attacker sends HTTP POST /upload.action<br/>Content-Type: &#37;&#123;OGNL_PAYLOAD&#125;.multipart/form-data])
+    Start(["Attacker sends HTTP POST /upload.action<br/>Content-Type: &#37;&#123;OGNL_PAYLOAD&#125;.multipart/form-data"])
     Start --> PIPE
 
     PIPE["<b>Struts2 filter → wrap → parse pipeline</b><br/>doFilter() → PrepareOperations.wrapRequest()<br/>→ Dispatcher.wrapRequest() → new MultiPartRequestWrapper()"]
-    PIPE --> D_CT{"Content-Type contains<br/>&quot;multipart/form-data&quot;?"}
+    PIPE --> D_CT{"Content-Type contains<br/>multipart/form-data?"}
     D_CT -- "No → normal request ..." --> OUT_NORM([non-upload path ...])
     D_CT -- "Yes (attacker appends<br/>.multipart/form-data to payload)" --> PARSE
 
